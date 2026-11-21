@@ -317,6 +317,15 @@
                                     <TextBlock Text="Notiz löschen" />
                                 </StackPanel>
                             </Button>
+
+                            <Border Height="1" Background="#1FFFFFFF" Margin="6,4" />
+                            <CheckBox x:Name="AutostartSwitch" Style="{StaticResource Switch}" Margin="10,6,10,6"
+                                      Click="Autostart_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE7E8;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                    <TextBlock Text="Mit Windows starten" />
+                                </StackPanel>
+                            </CheckBox>
                         </StackPanel>
 
                         <!-- Anpassen -->

@@ -41,6 +41,7 @@ namespace WidgetNotes
             FontSizeSlider.Value = Note.FontSize;
             foreach (var child in FontPanel.Children)
                 if (child is RadioButton rb) rb.IsChecked = (string)rb.Tag == Note.Font;
+            AutostartSwitch.IsChecked = App.IsAutostartEnabled();
             ShadowSwitch.IsChecked = Note.Shadow;
             GlossSwitch.IsChecked = Note.Gloss;
             UpdateValueLabels();
@@ -67,9 +68,10 @@ namespace WidgetNotes
         private void Size_Click(object sender, RoutedEventArgs e)
         {
             if (sender is not FrameworkElement { Tag: string size } || size == Note.Size) return;
+            var current = TileRect.TopLeft;
             Note.Size = size;
             ApplySizeDimensions();
-            PlaceAt(new Point(Note.X ?? Left + GridLayout.ShadowMargin, Note.Y ?? Top + GridLayout.ShadowMargin), animate: true);
+            PlaceAt(current, animate: true);
         }
 
         private void BuildSwatches()
@@ -253,6 +255,12 @@ namespace WidgetNotes
             Note.Gloss = GlossSwitch.IsChecked == true;
             ApplyStyle();
             NoteStore.SaveSoon();
+        }
+
+        private void Autostart_Click(object sender, RoutedEventArgs e)
+        {
+            App.SetAutostart(AutostartSwitch.IsChecked == true);
+            AutostartSwitch.IsChecked = App.IsAutostartEnabled();
         }
 
         private void ApplyAll_Click(object sender, RoutedEventArgs e)

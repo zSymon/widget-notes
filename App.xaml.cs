@@ -24,8 +24,20 @@ namespace WidgetNotes
         private DispatcherTimer? _clock;
         private readonly List<NoteWindow> _windows = new();
 
+        private DispatcherTimer? _relayoutTimer;
+        private SnapPreview? _preview;
+
         public bool IsExiting { get; private set; }
-        public SnapPreview Preview { get; private set; } = null!;
+
+        /// <summary>Vorschau beim Ziehen (wird neu erzeugt, falls ein Explorer-Neustart sie zerstört hat).</summary>
+        public SnapPreview Preview
+        {
+            get
+            {
+                if (_preview == null || _preview.IsClosed) _preview = new SnapPreview();
+                return _preview;
+            }
+        }
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -56,7 +68,9 @@ namespace WidgetNotes
             bool isAutostart = e.Args.Contains(AutostartArg);
             bool isFirstRun = !System.IO.File.Exists(NoteStore.FilePath);
 
-            Preview = new SnapPreview();
+            // Beim Hochfahren ist der Desktop evtl. noch nicht da – kurz warten, sonst landen die
+            // Kacheln nicht auf dem Desktop bzw. an falschen Stellen.
+            if (isAutostart) WaitForDesktop(TimeSpan.FromSeconds(60));
 
             NoteStore.Load();
             if (NoteStore.Notes.Count == 0)
@@ -68,6 +82,15 @@ namespace WidgetNotes
             NoteStore.SaveNow();
             SetupTray();
             StartClock();
+            WatchDisplays();
+
+            // Nach dem Hochfahren können Taskleiste/zweiter Bildschirm noch nachkommen.
+            if (isAutostart)
+            {
+                var late = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+                late.Tick += (_, _) => { late.Stop(); Relayout(); };
+                late.Start();
+            }
 
             // Kacheln liegen unter allen Fenstern – beim manuellen Start den Desktop zeigen,
             // damit man sieht, dass die App läuft.
@@ -103,16 +126,80 @@ namespace WidgetNotes
         }
 
         public IEnumerable<Rect> OccupiedExcept(NoteWindow self) =>
-            _windows.Where(w => w != self && w.Note.X.HasValue).Select(w => w.TileRect);
+            _windows.Where(w => w != self && w.IsPlaced).Select(w => w.TileRect);
 
         private NoteWindow OpenWindow(NoteData note, Point? desired)
         {
             var w = new NoteWindow(note);
             _windows.Add(w);
             if (desired is Point p) w.PlaceAt(p, animate: false);
-            else w.PlaceInitial();
+            else w.RestoreHome(animate: false);
             w.Show();
             return w;
+        }
+
+        // ---------- Bildschirme & Explorer ----------
+
+        private static void WaitForDesktop(TimeSpan timeout)
+        {
+            var until = DateTime.Now + timeout;
+            while (NativeMethods.FindWindow("Progman", null) == IntPtr.Zero && DateTime.Now < until)
+                Thread.Sleep(500);
+        }
+
+        private void WatchDisplays()
+        {
+            SystemEvents.DisplaySettingsChanged += OnDisplaysChanged;
+            SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
+        }
+
+        private void OnDisplaysChanged(object? sender, EventArgs e) => RelayoutSoon();
+
+        private void OnUserPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
+        {
+            // Taskleiste verschoben/Größe geändert → Arbeitsbereich anders.
+            if (e.Category is UserPreferenceCategory.Desktop or UserPreferenceCategory.General) RelayoutSoon();
+        }
+
+        /// <summary>Kurz warten, bis sich die Bildschirme eingependelt haben, dann neu anordnen.</summary>
+        private void RelayoutSoon()
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (_relayoutTimer == null)
+                {
+                    _relayoutTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+                    _relayoutTimer.Tick += (_, _) => { _relayoutTimer.Stop(); Relayout(); };
+                }
+                _relayoutTimer.Stop();
+                _relayoutTimer.Start();
+            });
+        }
+
+        /// <summary>Alle Kacheln an ihr gespeichertes Zuhause setzen (fehlende Bildschirme → Hauptbildschirm).</summary>
+        private void Relayout()
+        {
+            if (IsExiting) return;
+            foreach (var w in _windows) w.Unplace();
+            foreach (var w in _windows) w.RestoreHome(animate: true);
+        }
+
+        /// <summary>Kachel wurde von Windows zerstört (Explorer-Neustart) – neu erstellen, sobald der Desktop zurück ist.</summary>
+        public void OnWindowLost(NoteWindow window)
+        {
+            _windows.Remove(window);
+            var note = window.Note;
+            var retry = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            int attempts = 0;
+            retry.Tick += (_, _) =>
+            {
+                attempts++;
+                if (IsExiting || !NoteStore.Notes.Contains(note)) { retry.Stop(); return; }
+                if (NativeMethods.FindWindow("Progman", null) == IntPtr.Zero && attempts < 60) return;
+                retry.Stop();
+                OpenWindow(note, desired: null);
+            };
+            retry.Start();
         }
 
         public void CreateNote(NoteWindow? near = null)
@@ -209,6 +296,8 @@ namespace WidgetNotes
         private void ExitApp()
         {
             IsExiting = true;
+            SystemEvents.DisplaySettingsChanged -= OnDisplaysChanged;
+            SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
             NoteStore.SaveNow();
             if (_tray != null)
             {
@@ -233,6 +322,7 @@ namespace WidgetNotes
                 autostart.Checked = IsAutostartEnabled();
             };
             menu.Items.Add(autostart);
+            menu.Opening += (_, _) => autostart.Checked = IsAutostartEnabled();
             menu.Items.Add("Speicherordner öffnen", null, (_, _) =>
             {
                 System.IO.Directory.CreateDirectory(NoteStore.Folder);
@@ -291,13 +381,13 @@ namespace WidgetNotes
 
         // ---------- Autostart (HKCU\...\Run) ----------
 
-        private static bool IsAutostartEnabled()
+        public static bool IsAutostartEnabled()
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
             return key?.GetValue(RunValueName) is string;
         }
 
-        private static void SetAutostart(bool enable)
+        public static void SetAutostart(bool enable)
         {
             using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath);
             if (enable)

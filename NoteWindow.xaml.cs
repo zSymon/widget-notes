@@ -10,6 +10,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using Forms = System.Windows.Forms;
 
 namespace WidgetNotes
 {
@@ -56,15 +57,13 @@ namespace WidgetNotes
             _loading = false;
         }
 
-        /// <summary>Logische Position/Größe der Kachel im Raster.</summary>
-        public Rect TileRect
-        {
-            get
-            {
-                var s = GridLayout.TileSize(Note.Size);
-                return new Rect(Note.X ?? Left + M, Note.Y ?? Top + M, s.Width, s.Height);
-            }
-        }
+        /// <summary>Aktueller Rasterplatz (nur zur Laufzeit; das gespeicherte „Zuhause“ steht in Note).</summary>
+        private Point? _tilePos;
+
+        public bool IsPlaced => _tilePos.HasValue;
+        public void Unplace() => _tilePos = null;
+
+        public Rect TileRect => new(_tilePos ?? new Point(Left + M, Top + M), GridLayout.TileSize(Note.Size));
 
         // ---------- Desktop-Integration ----------
 
@@ -104,26 +103,57 @@ namespace WidgetNotes
             base.OnClosing(e);
         }
 
-        // ---------- Raster & Position ----------
-
-        public void PlaceInitial()
+        protected override void OnClosed(EventArgs e)
         {
-            var size = GridLayout.TileSize(Note.Size);
-            Point desired =
-                Note.X is double x && Note.Y is double y && GridLayout.IsOnScreen(new Rect(x, y, size.Width, size.Height))
-                    ? new Point(x, y)
-                    : GridLayout.DefaultSpot(Note.Size);
-            PlaceAt(desired, animate: false);
+            base.OnClosed(e);
+            // Startet der Explorer neu, zerstört Windows die Kacheln mit (sie gehören dem Desktop).
+            if (!_allowClose && !App.IsExiting)
+                App.OnWindowLost(this);
         }
 
+        // ---------- Raster & Position ----------
+
+        /// <summary>Nutzeraktion (Ziehen, Größe, neue Notiz): freien Platz suchen und als Zuhause merken.</summary>
         public void PlaceAt(Point desired, bool animate)
         {
             var slot = GridLayout.FindSlot(desired, Note.Size, App.OccupiedExcept(this));
-            Note.X = slot.X;
-            Note.Y = slot.Y;
+            Note.X = slot.Position.X;
+            Note.Y = slot.Position.Y;
+            Note.ScreenBounds = GridLayout.BoundsKey(slot.Screen);
+            Note.ScreenDevice = slot.Screen.DeviceName;
+            Note.GridX = slot.GridX;
+            Note.GridY = slot.GridY;
             NoteStore.SaveSoon();
+            MoveTo(slot.Position, animate);
+        }
 
-            double left = slot.X - M, top = slot.Y - M;
+        /// <summary>
+        /// Zum gespeicherten Zuhause zurückkehren (Start, Bildschirm an/aus, Auflösung geändert).
+        /// Überschreibt das Zuhause nie – fehlt der Bildschirm, wartet die Kachel auf dem Hauptbildschirm.
+        /// </summary>
+        public void RestoreHome(bool animate)
+        {
+            if (Note.GridX is not int gx || Note.GridY is not int gy)
+            {
+                // Ältere Daten ohne Zuhause: letzte Position übernehmen und daraus ein Zuhause machen.
+                var tile = new Rect(Note.X ?? 0, Note.Y ?? 0, GridLayout.TileSize(Note.Size).Width, GridLayout.TileSize(Note.Size).Height);
+                PlaceAt(Note.X.HasValue && Note.Y.HasValue && GridLayout.IsOnScreen(tile)
+                    ? tile.TopLeft
+                    : GridLayout.DefaultSpot(Note.Size), animate);
+                return;
+            }
+
+            var screen = GridLayout.FindScreen(Note.ScreenBounds, Note.ScreenDevice)
+                         ?? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0];
+            var grid = new ScreenGrid(screen);
+            var slot = GridLayout.FindSlot(grid.PositionOf(gx, gy), Note.Size, App.OccupiedExcept(this), screen);
+            MoveTo(slot.Position, animate);
+        }
+
+        private void MoveTo(Point tilePos, bool animate)
+        {
+            _tilePos = tilePos;
+            double left = tilePos.X - M, top = tilePos.Y - M;
             if (animate && IsVisible) AnimateTo(left, top);
             else
             {
@@ -159,7 +189,7 @@ namespace WidgetNotes
         {
             if (!_dragging) return;
             var slot = GridLayout.FindSlot(new Point(Left + M, Top + M), Note.Size, App.OccupiedExcept(this));
-            App.Preview.ShowAt(new Rect(slot, GridLayout.TileSize(Note.Size)), _hwnd, Note.Radius);
+            App.Preview.ShowAt(new Rect(slot.Position, GridLayout.TileSize(Note.Size)), _hwnd, Note.Radius);
         }
 
         private void AnimateTo(double left, double top)

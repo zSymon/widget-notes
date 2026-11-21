@@ -25,6 +25,8 @@ Einfach starten – keine Installation, kein .NET nötig. Läuft unter Windows 1
 - **Termine** – Fälligkeitsdatum und Uhrzeit per Mini-Kalender, Markierung für heute und überfällig
 - **Erinnerungen** – Windows-Benachrichtigung, wenn eine Aufgabe fällig ist
 - **Anpassbar** – 8 Designs, eigene Verlaufs- und Akzentfarben, Transparenz, Eckenradius, Schriftart, Schriftgröße, Schatten und Glanz
+- **Merkt sich alles** – jede Kachel bleibt auch nach einem Neustart auf ihrem Bildschirm und Platz; ist ein Bildschirm aus, wartet sie auf dem Hauptbildschirm und kehrt automatisch zurück
+- **Autostart** – per Schalter im Menü der Kachel
 - **Speichert automatisch** – alles landet in `%APPDATA%\WidgetNotes\notes.json`
 
 ## Bedienung
@@ -39,7 +41,10 @@ Einfach starten – keine Installation, kein .NET nötig. Läuft unter Windows 1
 | Termin setzen | Beim Überfahren einer Aufgabe auf das Kalender-Symbol klicken |
 | Schriftgröße | <kbd>Strg</kbd> + Mausrad |
 | Desktop anzeigen | Linksklick auf das Symbol im Infobereich der Taskleiste |
-| Autostart, Beenden | Rechtsklick auf das Symbol im Infobereich der Taskleiste |
+| Mit Windows starten | **···** → Schalter „Mit Windows starten“ (oder Rechtsklick auf das Symbol im Infobereich) |
+| Beenden | Rechtsklick auf das Symbol im Infobereich der Taskleiste |
+
+> Tipp: Leg die `WidgetNotes.exe` vor dem Aktivieren des Autostarts an einen festen Ort (z. B. einen eigenen Ordner), denn der Autostart merkt sich den Speicherort.
 
 ## Selbst bauen
 

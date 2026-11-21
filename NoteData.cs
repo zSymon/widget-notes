@@ -13,9 +13,15 @@ namespace WidgetNotes
         public string Text { get; set; } = "";
         public ObservableCollection<TodoItem> Items { get; set; } = new();
 
-        /// <summary>Position der Kachel (ohne Schattenrand) in WPF-Einheiten.</summary>
+        /// <summary>Letzte vom Nutzer gewählte Position (ohne Schattenrand) in WPF-Einheiten.</summary>
         public double? X { get; set; }
         public double? Y { get; set; }
+
+        /// <summary>„Zuhause“ der Kachel: Bildschirm (Pixel-Bounds + Gerätename) und Rasterzelle darauf.</summary>
+        public string? ScreenBounds { get; set; }
+        public string? ScreenDevice { get; set; }
+        public int? GridX { get; set; }
+        public int? GridY { get; set; }
 
         /// <summary>Small, Medium, Large oder Tall.</summary>
         public string Size { get; set; } = "Medium";
