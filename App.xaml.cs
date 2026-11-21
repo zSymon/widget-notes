@@ -15,7 +15,11 @@ namespace WidgetNotes
         private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string RunValueName = "WidgetNotes";
 
+        private const string ShowEventName = "WidgetNotes_ShowWidgets";
+        private const string AutostartArg = "--autostart";
+
         private Mutex? _mutex;
+        private EventWaitHandle? _showEvent;
         private Forms.NotifyIcon? _tray;
         private DispatcherTimer? _clock;
         private readonly List<NoteWindow> _windows = new();
@@ -26,13 +30,31 @@ namespace WidgetNotes
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            DispatcherUnhandledException += (_, args) =>
+            {
+                ReportError(args.Exception);
+                args.Handled = true;
+            };
+            AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            {
+                if (args.ExceptionObject is Exception ex) LogError(ex);
+            };
 
             _mutex = new Mutex(true, "WidgetNotes_SingleInstance", out bool isFirstInstance);
             if (!isFirstInstance)
             {
+                // Läuft schon: die laufende Instanz soll die Kacheln zeigen.
+                try { EventWaitHandle.OpenExisting(ShowEventName).Set(); } catch { }
                 Shutdown();
                 return;
             }
+
+            _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+            ThreadPool.RegisterWaitForSingleObject(_showEvent,
+                (_, _) => Dispatcher.BeginInvoke(new Action(ToggleDesktop)), null, Timeout.Infinite, executeOnlyOnce: false);
+
+            bool isAutostart = e.Args.Contains(AutostartArg);
+            bool isFirstRun = !System.IO.File.Exists(NoteStore.FilePath);
 
             Preview = new SnapPreview();
 
@@ -46,6 +68,38 @@ namespace WidgetNotes
             NoteStore.SaveNow();
             SetupTray();
             StartClock();
+
+            // Kacheln liegen unter allen Fenstern – beim manuellen Start den Desktop zeigen,
+            // damit man sieht, dass die App läuft.
+            if (!isAutostart)
+            {
+                Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(ToggleDesktop));
+                if (isFirstRun)
+                    _tray?.ShowBalloonTip(8000, "Widget Notes läuft",
+                        "Deine Notizen liegen als Kacheln auf dem Desktop. Ein Klick auf das Symbol hier unten zeigt sie jederzeit.",
+                        Forms.ToolTipIcon.None);
+            }
+        }
+
+        // ---------- Fehler ----------
+
+        private static readonly string LogPath = System.IO.Path.Combine(NoteStore.Folder, "error.log");
+
+        private static void LogError(Exception ex)
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(NoteStore.Folder);
+                System.IO.File.AppendAllText(LogPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n\n");
+            }
+            catch { }
+        }
+
+        private static void ReportError(Exception ex)
+        {
+            LogError(ex);
+            MessageBox.Show($"Da ist etwas schiefgelaufen:\n\n{ex.Message}\n\nDetails stehen in:\n{LogPath}",
+                "Widget Notes", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         public IEnumerable<Rect> OccupiedExcept(NoteWindow self) =>
@@ -247,7 +301,7 @@ namespace WidgetNotes
         {
             using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath);
             if (enable)
-                key.SetValue(RunValueName, $"\"{Environment.ProcessPath}\"");
+                key.SetValue(RunValueName, $"\"{Environment.ProcessPath}\" {AutostartArg}");
             else
                 key.DeleteValue(RunValueName, throwOnMissingValue: false);
         }

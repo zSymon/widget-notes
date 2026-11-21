@@ -13,7 +13,7 @@
     <Product>Widget Notes</Product>
     <AssemblyTitle>Widget Notes</AssemblyTitle>
     <Description>Notizen und To-dos als Kacheln auf dem Windows-Desktop</Description>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -23,6 +23,8 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- WPF enthält C++/CLI-Assemblies (DirectWriteForwarder), die nicht direkt aus dem Bundle laden können -->
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>none</DebugType>
   </PropertyGroup>
