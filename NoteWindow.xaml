@@ -326,6 +326,13 @@
                                     <TextBlock Text="Mit Windows starten" />
                                 </StackPanel>
                             </CheckBox>
+                            <Button x:Name="UpdateRow" Style="{StaticResource MenuRow}" Click="Update_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE896;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                    <TextBlock x:Name="UpdateText" Text="Nach Updates suchen" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock x:Name="VersionLabel" Style="{StaticResource MenuLabel}" FontWeight="Normal" Margin="10,2,0,6" />
                         </StackPanel>
 
                         <!-- Anpassen -->

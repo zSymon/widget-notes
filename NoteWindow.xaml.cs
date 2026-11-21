@@ -146,7 +146,7 @@ namespace WidgetNotes
             var screen = GridLayout.FindScreen(Note.ScreenBounds, Note.ScreenDevice)
                          ?? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0];
             var grid = new ScreenGrid(screen);
-            var slot = GridLayout.FindSlot(grid.PositionOf(gx, gy), Note.Size, App.OccupiedExcept(this), screen);
+            var slot = GridLayout.FindSlot(grid.PositionOf(gx, gy, GridLayout.TileSize(Note.Size)), Note.Size, App.OccupiedExcept(this), screen);
             MoveTo(slot.Position, animate);
         }
 

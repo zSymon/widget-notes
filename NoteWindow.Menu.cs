@@ -42,6 +42,17 @@ namespace WidgetNotes
             foreach (var child in FontPanel.Children)
                 if (child is RadioButton rb) rb.IsChecked = (string)rb.Tag == Note.Font;
             AutostartSwitch.IsChecked = App.IsAutostartEnabled();
+            VersionLabel.Text = $"Version {Updater.Current}";
+            if (App.AvailableUpdate is UpdateInfo update)
+            {
+                UpdateText.Text = $"Update installieren (v{update.Version})";
+                UpdateRow.Foreground = (Brush)Resources["MenuAccent"];
+            }
+            else
+            {
+                UpdateText.Text = "Nach Updates suchen";
+                UpdateRow.ClearValue(ForegroundProperty);
+            }
             ShadowSwitch.IsChecked = Note.Shadow;
             GlossSwitch.IsChecked = Note.Gloss;
             UpdateValueLabels();
@@ -261,6 +272,13 @@ namespace WidgetNotes
         {
             App.SetAutostart(AutostartSwitch.IsChecked == true);
             AutostartSwitch.IsChecked = App.IsAutostartEnabled();
+        }
+
+        private void Update_Click(object sender, RoutedEventArgs e)
+        {
+            MenuPopup.IsOpen = false;
+            if (App.AvailableUpdate != null) App.InstallUpdate();
+            else App.CheckForUpdates(manual: true);
         }
 
         private void ApplyAll_Click(object sender, RoutedEventArgs e)
