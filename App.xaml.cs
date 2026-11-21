@@ -254,6 +254,8 @@ namespace WidgetNotes
                 "Widget Notes", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
+        public IReadOnlyList<NoteWindow> NoteWindows => _windows;
+
         public IEnumerable<Rect> OccupiedExcept(NoteWindow self) =>
             _windows.Where(w => w != self && w.IsPlaced).Select(w => w.TileRect);
 

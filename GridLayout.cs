@@ -7,8 +7,8 @@ using Forms = System.Windows.Forms;
 
 namespace WidgetNotes
 {
-    /// <summary>Ein gefundener Rasterplatz: Position, Bildschirm und Zelle auf diesem Bildschirm.</summary>
-    public readonly record struct Slot(Point Position, Forms.Screen Screen, int GridX, int GridY);
+    /// <summary>Ein gefundener Platz: Position und Bildschirm.</summary>
+    public readonly record struct Slot(Point Position, Forms.Screen Screen);
 
     /// <summary>Raster eines Bildschirms (Arbeitsbereich ohne Taskleiste).</summary>
     public sealed class ScreenGrid
@@ -114,47 +114,58 @@ namespace WidgetNotes
         }
 
         /// <summary>
-        /// Freien Rasterplatz suchen, der <paramref name="desired"/> am nächsten liegt.
+        /// Freien Platz suchen, der <paramref name="desired"/> am nächsten liegt. Kandidaten sind die Rasterzellen,
+        /// die Bildschirmränder und – magnetisch – die Plätze direkt neben bzw. bündig mit anderen Kacheln.
         /// Ohne <paramref name="screen"/> wird der Bildschirm unter der Kachelmitte genommen.
         /// </summary>
         public static Slot FindSlot(Point desired, (int W, int H) units, IEnumerable<Rect> occupied, Forms.Screen? screen = null)
         {
             var tile = TileSize(units);
-            var others = occupied.ToList();
             screen ??= ScreenAt(new Point(desired.X + tile.Width / 2, desired.Y + tile.Height / 2));
             var grid = new ScreenGrid(screen);
+            var wa = grid.WorkArea;
+            var others = occupied.Where(o => o.IntersectsWith(wa)).ToList();
 
-            var (uw, uh) = units;
-            var xs = Candidates(grid.Cols - uw, grid.OriginX, grid.WorkArea.Right - tile.Width);
-            var ys = Candidates(grid.Rows - uh, grid.OriginY, grid.WorkArea.Bottom - tile.Height);
-
-            Slot? best = null, nearest = null;
-            double bestDist = double.MaxValue, nearestDist = double.MaxValue;
-            foreach (int gy in ys)
+            var xs = Candidates(grid.OriginX, wa.Left, wa.Right, tile.Width, others.SelectMany(o => new[]
             {
-                foreach (int gx in xs)
-                {
-                    var pos = grid.PositionOf(gx, gy, tile);
-                    double d = (pos.X - desired.X) * (pos.X - desired.X) + (pos.Y - desired.Y) * (pos.Y - desired.Y);
-                    if (d < nearestDist) { nearestDist = d; nearest = new Slot(pos, screen, gx, gy); }
+                o.Right + Gap, o.Left - Gap - tile.Width, // daneben
+                o.Left, o.Right - tile.Width,             // bündig
+            }));
+            var ys = Candidates(grid.OriginY, wa.Top, wa.Bottom, tile.Height, others.SelectMany(o => new[]
+            {
+                o.Bottom + Gap, o.Top - Gap - tile.Height,
+                o.Top, o.Bottom - tile.Height,
+            }));
 
-                    var inner = Rect.Inflate(new Rect(pos, tile), -2, -2);
+            Point? best = null, nearest = null;
+            double bestDist = double.MaxValue, nearestDist = double.MaxValue;
+            foreach (double y in ys)
+            {
+                foreach (double x in xs)
+                {
+                    double d = (x - desired.X) * (x - desired.X) + (y - desired.Y) * (y - desired.Y);
+                    if (d < nearestDist) { nearestDist = d; nearest = new Point(x, y); }
+                    if (d >= bestDist) continue;
+
+                    var inner = Rect.Inflate(new Rect(x, y, tile.Width, tile.Height), -2, -2);
                     if (others.Any(o => o.IntersectsWith(inner))) continue;
-                    if (d < bestDist) { bestDist = d; best = new Slot(pos, screen, gx, gy); }
+                    bestDist = d;
+                    best = new Point(x, y);
                 }
             }
 
             // Alles voll: einfach auf den nächsten Platz legen.
-            return best ?? nearest!.Value;
+            return new Slot(best ?? nearest ?? new Point(wa.Left, wa.Top), screen);
         }
 
-        /// <summary>Rasterzellen 0..max plus „bündig am Ende“, falls das nicht ohnehin auf eine Zelle fällt.</summary>
-        private static List<int> Candidates(int max, double origin, double flushPos)
+        /// <summary>Rasterpositionen, beide Ränder und Andock-Positionen – nur was auf den Bildschirm passt.</summary>
+        private static List<double> Candidates(double origin, double min, double max, double length, IEnumerable<double> magnets)
         {
-            max = Math.Max(0, max);
-            var list = Enumerable.Range(0, max + 1).ToList();
-            if (flushPos - (origin + max * Step) > 1) list.Add(FlushEnd);
-            return list;
+            double last = max - length;
+            var list = new List<double> { min, last };
+            for (double p = origin; p <= last + 0.5; p += Step) list.Add(p);
+            list.AddRange(magnets.Where(p => p >= min - 0.5 && p <= last + 0.5));
+            return list.Select(p => Math.Round(p, 1)).Distinct().ToList();
         }
     }
 }

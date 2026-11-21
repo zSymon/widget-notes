@@ -117,12 +117,19 @@ namespace WidgetNotes
         public void PlaceAt(Point desired, bool animate)
         {
             var slot = GridLayout.FindSlot(desired, Note.Units, App.OccupiedExcept(this));
+            var tile = GridLayout.TileSize(Note.Units);
+            var wa = new ScreenGrid(slot.Screen).WorkArea;
+
             Note.X = slot.Position.X;
             Note.Y = slot.Position.Y;
             Note.ScreenBounds = GridLayout.BoundsKey(slot.Screen);
             Note.ScreenDevice = slot.Screen.DeviceName;
-            Note.GridX = slot.GridX;
-            Note.GridY = slot.GridY;
+            Note.OffsetX = Math.Round(slot.Position.X - wa.Left, 1);
+            Note.OffsetY = Math.Round(slot.Position.Y - wa.Top, 1);
+            Note.AnchorRight = Math.Abs(slot.Position.X + tile.Width - wa.Right) < 1;
+            Note.AnchorBottom = Math.Abs(slot.Position.Y + tile.Height - wa.Bottom) < 1;
+            Note.GridX = null;
+            Note.GridY = null;
             NoteStore.SaveSoon();
             MoveTo(slot.Position, animate);
         }
@@ -133,20 +140,39 @@ namespace WidgetNotes
         /// </summary>
         public void RestoreHome(bool animate)
         {
-            if (Note.GridX is not int gx || Note.GridY is not int gy)
+            var size = GridLayout.TileSize(Note.Units);
+            bool hasHome = Note.OffsetX.HasValue && Note.OffsetY.HasValue || Note.GridX.HasValue && Note.GridY.HasValue;
+            if (!hasHome)
             {
-                // Ältere Daten ohne Zuhause: letzte Position übernehmen und daraus ein Zuhause machen.
-                var tile = new Rect(Note.X ?? 0, Note.Y ?? 0, GridLayout.TileSize(Note.Units).Width, GridLayout.TileSize(Note.Units).Height);
-                PlaceAt(Note.X.HasValue && Note.Y.HasValue && GridLayout.IsOnScreen(tile)
-                    ? tile.TopLeft
+                // Ganz alte Daten ohne Zuhause: letzte Position übernehmen und daraus ein Zuhause machen.
+                var last = new Rect(Note.X ?? 0, Note.Y ?? 0, size.Width, size.Height);
+                PlaceAt(Note.X.HasValue && Note.Y.HasValue && GridLayout.IsOnScreen(last)
+                    ? last.TopLeft
                     : GridLayout.DefaultSpot(Note.Units), animate);
                 return;
             }
 
-            var screen = GridLayout.FindScreen(Note.ScreenBounds, Note.ScreenDevice)
-                         ?? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0];
+            var savedScreen = GridLayout.FindScreen(Note.ScreenBounds, Note.ScreenDevice);
+            var screen = savedScreen ?? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0];
             var grid = new ScreenGrid(screen);
-            var slot = GridLayout.FindSlot(grid.PositionOf(gx, gy, GridLayout.TileSize(Note.Units)), Note.Units, App.OccupiedExcept(this), screen);
+            var wa = grid.WorkArea;
+
+            Point desired;
+            if (Note.OffsetX is double ox && Note.OffsetY is double oy)
+                desired = new Point(
+                    Note.AnchorRight ? wa.Right - size.Width : wa.Left + ox,
+                    Note.AnchorBottom ? wa.Bottom - size.Height : wa.Top + oy);
+            else
+                desired = grid.PositionOf(Note.GridX!.Value, Note.GridY!.Value, size);
+
+            var slot = GridLayout.FindSlot(desired, Note.Units, App.OccupiedExcept(this), screen);
+
+            // Alte Rasterzelle einmalig ins neue Format übernehmen (nur wenn der Bildschirm wirklich da ist).
+            if (Note.OffsetX == null && savedScreen != null)
+            {
+                PlaceAt(slot.Position, animate);
+                return;
+            }
             MoveTo(slot.Position, animate);
         }
 

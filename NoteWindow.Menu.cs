@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -19,6 +20,7 @@ namespace WidgetNotes
             SyncMenu();
             MainPage.Visibility = Visibility.Visible;
             CustomizePage.Visibility = Visibility.Collapsed;
+            CopyPage.Visibility = Visibility.Collapsed;
             MenuPopup.IsOpen = true;
         }
 
@@ -190,7 +192,72 @@ namespace WidgetNotes
         {
             SyncMenu();
             CustomizePage.Visibility = Visibility.Collapsed;
+            CopyPage.Visibility = Visibility.Collapsed;
             MainPage.Visibility = Visibility.Visible;
+        }
+
+        // ---------- Design übernehmen ----------
+
+        private void CopyStyle_Click(object sender, RoutedEventArgs e)
+        {
+            CopySourceList.Children.Clear();
+            var rowStyle = (Style)FindResource("MenuRow");
+
+            foreach (var other in App.NoteWindows.Where(w => w != this))
+            {
+                var source = other.Note;
+                var swatch = new System.Windows.Shapes.Ellipse
+                {
+                    Width = 18, Height = 18, Margin = new Thickness(0, 0, 10, 0),
+                    Fill = Themes.Resolve(source).CreateBackground(),
+                    Stroke = new SolidColorBrush(Color.FromArgb(0x40, 255, 255, 255)),
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                var label = new TextBlock
+                {
+                    Text = NoteLabel(source),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxWidth = 180,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                var row = new Button
+                {
+                    Style = rowStyle,
+                    Content = new StackPanel { Orientation = Orientation.Horizontal, Children = { swatch, label } },
+                };
+                row.Click += (_, _) =>
+                {
+                    Note.CopyStyleFrom(source);
+                    ApplyStyle();
+                    NoteStore.SaveSoon();
+                    ScheduleGrowCheck();
+                    MenuPopup.IsOpen = false;
+                };
+                CopySourceList.Children.Add(row);
+            }
+
+            if (CopySourceList.Children.Count == 0)
+                CopySourceList.Children.Add(new TextBlock
+                {
+                    Text = "Keine anderen Notizen vorhanden.",
+                    Foreground = (Brush)FindResource("MenuMuted"),
+                    FontFamily = (FontFamily)FindResource("MenuFont"),
+                    FontSize = 13,
+                    Margin = new Thickness(10, 4, 10, 8),
+                });
+
+            MainPage.Visibility = Visibility.Collapsed;
+            CopyPage.Visibility = Visibility.Visible;
+        }
+
+        /// <summary>Titel, sonst erste Textzeile bzw. erste Aufgabe, sonst „Ohne Titel“.</summary>
+        private static string NoteLabel(NoteData n)
+        {
+            if (!string.IsNullOrWhiteSpace(n.Title)) return n.Title.Trim();
+            var first = n.Kind == "todo"
+                ? n.Items.Select(i => i.Text).FirstOrDefault(t => !string.IsNullOrWhiteSpace(t))
+                : n.Text.Split('\n').FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
+            return string.IsNullOrWhiteSpace(first) ? "Ohne Titel" : first.Trim();
         }
 
         private Color TargetColor(int target) => Themes.Parse(target switch

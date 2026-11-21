@@ -17,9 +17,18 @@ namespace WidgetNotes
         public double? X { get; set; }
         public double? Y { get; set; }
 
-        /// <summary>„Zuhause“ der Kachel: Bildschirm (Pixel-Bounds + Gerätename) und Rasterzelle darauf.</summary>
+        /// <summary>„Zuhause“ der Kachel: Bildschirm (Pixel-Bounds + Gerätename) …</summary>
         public string? ScreenBounds { get; set; }
         public string? ScreenDevice { get; set; }
+
+        /// <summary>… und Abstand zur linken oberen Ecke des Arbeitsbereichs. Klebt die Kachel am rechten/unteren
+        /// Rand, bleibt sie dort auch bei anderer Auflösung.</summary>
+        public double? OffsetX { get; set; }
+        public double? OffsetY { get; set; }
+        public bool AnchorRight { get; set; }
+        public bool AnchorBottom { get; set; }
+
+        /// <summary>Ältere Versionen (1.1–1.3): Rasterzelle. Wird beim Start in Offset umgerechnet.</summary>
         public int? GridX { get; set; }
         public int? GridY { get; set; }
 

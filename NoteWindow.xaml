@@ -317,6 +317,14 @@
                                     <TextBlock Text="Anpassen …" />
                                 </DockPanel>
                             </Button>
+                            <Button Style="{StaticResource MenuRow}" HorizontalContentAlignment="Stretch" Click="CopyStyle_Click">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="10"
+                                               VerticalAlignment="Center" Foreground="{StaticResource MenuMuted}" />
+                                    <TextBlock Text="&#xE8C8;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                    <TextBlock Text="Design übernehmen …" />
+                                </DockPanel>
+                            </Button>
 
                             <Border Height="1" Background="#1FFFFFFF" Margin="6,4" />
 
@@ -354,6 +362,17 @@
                                 </StackPanel>
                             </Button>
                             <TextBlock x:Name="VersionLabel" Style="{StaticResource MenuLabel}" FontWeight="Normal" Margin="10,2,0,6" />
+                        </StackPanel>
+
+                        <!-- Design einer anderen Notiz übernehmen -->
+                        <StackPanel x:Name="CopyPage" Margin="6" Visibility="Collapsed">
+                            <DockPanel Margin="0,0,0,2">
+                                <Button Style="{StaticResource IconButton}" Content="&#xE72B;" Click="Back_Click" ToolTip="Zurück" />
+                                <TextBlock Text="Design übernehmen" Foreground="White" FontFamily="{StaticResource MenuFont}"
+                                           FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0,0,0" />
+                            </DockPanel>
+                            <TextBlock Text="VON NOTIZ" Style="{StaticResource MenuLabel}" Margin="8,4,0,4" />
+                            <StackPanel x:Name="CopySourceList" />
                         </StackPanel>
 
                         <!-- Anpassen -->
