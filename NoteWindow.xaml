@@ -227,6 +227,27 @@
             </Grid>
         </Border>
 
+        <!-- Griff zum Größe-Ziehen (unten rechts) -->
+        <Border x:Name="ResizeGrip" Width="26" Height="26" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Background="Transparent" Cursor="SizeNWSE" ToolTip="Größe ziehen"
+                MouseLeftButtonDown="Grip_MouseLeftButtonDown" MouseMove="Grip_MouseMove"
+                MouseLeftButtonUp="Grip_MouseLeftButtonUp" LostMouseCapture="Grip_LostMouseCapture">
+            <Path Data="M 15,6 L 6,15 M 15,10.5 L 10.5,15" Stroke="{DynamicResource Secondary}" StrokeThickness="1.6"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" Margin="0,0,4,4"
+                  HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Path.Style>
+                    <Style TargetType="Path">
+                        <Setter Property="Opacity" Value="0" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Opacity" Value="1" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Path.Style>
+            </Path>
+        </Border>
+
         <!-- ================= Optionsmenü ================= -->
         <Popup x:Name="MenuPopup" PlacementTarget="{Binding ElementName=MoreButton}" Placement="Bottom"
                HorizontalOffset="-236" VerticalOffset="-6" AllowsTransparency="True" StaysOpen="False"

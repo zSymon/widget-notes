@@ -338,9 +338,9 @@ namespace WidgetNotes
             if (near != null)
             {
                 var r = near.TileRect;
-                desired = new Point(r.X - GridLayout.TileSize(note.Size).Width - GridLayout.Gap, r.Y);
+                desired = new Point(r.X - GridLayout.TileSize(note.Units).Width - GridLayout.Gap, r.Y);
             }
-            else desired = GridLayout.DefaultSpot(note.Size);
+            else desired = GridLayout.DefaultSpot(note.Units);
 
             NoteStore.Notes.Add(note);
             var w = OpenWindow(note, desired);

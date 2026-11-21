@@ -23,8 +23,15 @@ namespace WidgetNotes
         public int? GridX { get; set; }
         public int? GridY { get; set; }
 
-        /// <summary>Small, Medium, Large oder Tall.</summary>
+        /// <summary>Vorgabegröße (Small, Medium, Large, Tall) – gilt nur, solange W/H nicht gesetzt sind.</summary>
         public string Size { get; set; } = "Medium";
+
+        /// <summary>Freie Größe in Rastereinheiten.</summary>
+        public int? W { get; set; }
+        public int? H { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public (int W, int H) Units => (W ?? GridLayout.Units(Size).W, H ?? GridLayout.Units(Size).H);
 
         // ---- Aussehen ----
         /// <summary>Preset-Key oder "custom".</summary>

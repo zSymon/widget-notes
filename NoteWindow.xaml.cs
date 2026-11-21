@@ -63,7 +63,7 @@ namespace WidgetNotes
         public bool IsPlaced => _tilePos.HasValue;
         public void Unplace() => _tilePos = null;
 
-        public Rect TileRect => new(_tilePos ?? new Point(Left + M, Top + M), GridLayout.TileSize(Note.Size));
+        public Rect TileRect => new(_tilePos ?? new Point(Left + M, Top + M), GridLayout.TileSize(Note.Units));
 
         // ---------- Desktop-Integration ----------
 
@@ -116,7 +116,7 @@ namespace WidgetNotes
         /// <summary>Nutzeraktion (Ziehen, Größe, neue Notiz): freien Platz suchen und als Zuhause merken.</summary>
         public void PlaceAt(Point desired, bool animate)
         {
-            var slot = GridLayout.FindSlot(desired, Note.Size, App.OccupiedExcept(this));
+            var slot = GridLayout.FindSlot(desired, Note.Units, App.OccupiedExcept(this));
             Note.X = slot.Position.X;
             Note.Y = slot.Position.Y;
             Note.ScreenBounds = GridLayout.BoundsKey(slot.Screen);
@@ -136,17 +136,17 @@ namespace WidgetNotes
             if (Note.GridX is not int gx || Note.GridY is not int gy)
             {
                 // Ältere Daten ohne Zuhause: letzte Position übernehmen und daraus ein Zuhause machen.
-                var tile = new Rect(Note.X ?? 0, Note.Y ?? 0, GridLayout.TileSize(Note.Size).Width, GridLayout.TileSize(Note.Size).Height);
+                var tile = new Rect(Note.X ?? 0, Note.Y ?? 0, GridLayout.TileSize(Note.Units).Width, GridLayout.TileSize(Note.Units).Height);
                 PlaceAt(Note.X.HasValue && Note.Y.HasValue && GridLayout.IsOnScreen(tile)
                     ? tile.TopLeft
-                    : GridLayout.DefaultSpot(Note.Size), animate);
+                    : GridLayout.DefaultSpot(Note.Units), animate);
                 return;
             }
 
             var screen = GridLayout.FindScreen(Note.ScreenBounds, Note.ScreenDevice)
                          ?? Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0];
             var grid = new ScreenGrid(screen);
-            var slot = GridLayout.FindSlot(grid.PositionOf(gx, gy, GridLayout.TileSize(Note.Size)), Note.Size, App.OccupiedExcept(this), screen);
+            var slot = GridLayout.FindSlot(grid.PositionOf(gx, gy, GridLayout.TileSize(Note.Units)), Note.Units, App.OccupiedExcept(this), screen);
             MoveTo(slot.Position, animate);
         }
 
@@ -165,7 +165,7 @@ namespace WidgetNotes
 
         private void ApplySizeDimensions()
         {
-            var s = GridLayout.TileSize(Note.Size);
+            var s = GridLayout.TileSize(Note.Units);
             Width = s.Width + 2 * M;
             Height = s.Height + 2 * M;
         }
@@ -188,8 +188,8 @@ namespace WidgetNotes
         private void OnLocationChanged(object? sender, EventArgs e)
         {
             if (!_dragging) return;
-            var slot = GridLayout.FindSlot(new Point(Left + M, Top + M), Note.Size, App.OccupiedExcept(this));
-            App.Preview.ShowAt(new Rect(slot.Position, GridLayout.TileSize(Note.Size)), _hwnd, Note.Radius);
+            var slot = GridLayout.FindSlot(new Point(Left + M, Top + M), Note.Units, App.OccupiedExcept(this));
+            App.Preview.ShowAt(new Rect(slot.Position, GridLayout.TileSize(Note.Units)), _hwnd, Note.Radius);
         }
 
         private void AnimateTo(double left, double top)
@@ -247,6 +247,7 @@ namespace WidgetNotes
             if (_loading) return;
             Note.Text = Editor.Text;
             Touch();
+            ScheduleGrowCheck();
         }
 
         private void Touch()
@@ -289,6 +290,7 @@ namespace WidgetNotes
             if (Keyboard.Modifiers != ModifierKeys.Control) return;
             Note.FontSize = Math.Clamp(Note.FontSize + (e.Delta > 0 ? 1 : -1), 10, 28);
             ApplyStyle();
+            ScheduleGrowCheck();
             NoteStore.SaveSoon();
             e.Handled = true;
         }

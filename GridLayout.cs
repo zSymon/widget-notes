@@ -62,11 +62,16 @@ namespace WidgetNotes
             _ => (4, 2),
         };
 
-        public static Size TileSize(string size)
-        {
-            var (w, h) = Units(size);
-            return new Size(w * Unit + (w - 1) * Gap, h * Unit + (h - 1) * Gap);
-        }
+        public const int MinUnits = 2;
+
+        public static Size TileSize(string size) => TileSize(Units(size));
+
+        public static Size TileSize((int W, int H) u) =>
+            new(u.W * Unit + (u.W - 1) * Gap, u.H * Unit + (u.H - 1) * Gap);
+
+        /// <summary>Pixelmaß → nächstes Rastermaß (mindestens <see cref="MinUnits"/>).</summary>
+        public static int ToUnits(double length) =>
+            Math.Max(MinUnits, (int)Math.Round((length + Gap) / Step));
 
         internal static double Scale
         {
@@ -102,24 +107,24 @@ namespace WidgetNotes
         }
 
         /// <summary>Standardplatz: oben rechts auf dem Hauptbildschirm.</summary>
-        public static Point DefaultSpot(string size)
+        public static Point DefaultSpot((int W, int H) units)
         {
             var grid = new ScreenGrid(Forms.Screen.PrimaryScreen ?? Forms.Screen.AllScreens[0]);
-            return grid.PositionOf(FlushEnd, 0, TileSize(size));
+            return grid.PositionOf(FlushEnd, 0, TileSize(units));
         }
 
         /// <summary>
         /// Freien Rasterplatz suchen, der <paramref name="desired"/> am nächsten liegt.
         /// Ohne <paramref name="screen"/> wird der Bildschirm unter der Kachelmitte genommen.
         /// </summary>
-        public static Slot FindSlot(Point desired, string size, IEnumerable<Rect> occupied, Forms.Screen? screen = null)
+        public static Slot FindSlot(Point desired, (int W, int H) units, IEnumerable<Rect> occupied, Forms.Screen? screen = null)
         {
-            var tile = TileSize(size);
+            var tile = TileSize(units);
             var others = occupied.ToList();
             screen ??= ScreenAt(new Point(desired.X + tile.Width / 2, desired.Y + tile.Height / 2));
             var grid = new ScreenGrid(screen);
 
-            var (uw, uh) = Units(size);
+            var (uw, uh) = units;
             var xs = Candidates(grid.Cols - uw, grid.OriginX, grid.WorkArea.Right - tile.Width);
             var ys = Candidates(grid.Rows - uh, grid.OriginY, grid.WorkArea.Bottom - tile.Height);
 

@@ -63,6 +63,7 @@ namespace WidgetNotes
             if (e.OldItems != null)
                 foreach (TodoItem i in e.OldItems) i.PropertyChanged -= Item_PropertyChanged;
             if (!_loading) Touch();
+            ScheduleGrowCheck();
         }
 
         private void Item_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -73,6 +74,7 @@ namespace WidgetNotes
                 return;
             }
             if (!_loading) Touch();
+            if (e.PropertyName == nameof(TodoItem.Text)) ScheduleGrowCheck();
         }
 
         // ---------- Tastatur ----------

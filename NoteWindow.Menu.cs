@@ -28,10 +28,10 @@ namespace WidgetNotes
 
             KindText.IsChecked = Note.Kind != "todo";
             KindTodo.IsChecked = Note.Kind == "todo";
-            SizeSmall.IsChecked = Note.Size == "Small";
-            SizeMedium.IsChecked = Note.Size == "Medium";
-            SizeLarge.IsChecked = Note.Size == "Large";
-            SizeTall.IsChecked = Note.Size == "Tall";
+            SizeSmall.IsChecked = Note.Units == GridLayout.Units("Small");
+            SizeMedium.IsChecked = Note.Units == GridLayout.Units("Medium");
+            SizeLarge.IsChecked = Note.Units == GridLayout.Units("Large");
+            SizeTall.IsChecked = Note.Units == GridLayout.Units("Tall");
             foreach (var child in SwatchPanel.Children)
                 if (child is RadioButton rb) rb.IsChecked = (string)rb.Tag == Note.Theme;
             ClearDoneRow.Visibility = Note.Kind == "todo" ? Visibility.Visible : Visibility.Collapsed;
@@ -78,9 +78,13 @@ namespace WidgetNotes
 
         private void Size_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is not FrameworkElement { Tag: string size } || size == Note.Size) return;
+            if (sender is not FrameworkElement { Tag: string size }) return;
+            var units = GridLayout.Units(size);
+            if (units == Note.Units) return;
             var current = TileRect.TopLeft;
             Note.Size = size;
+            Note.W = units.W;
+            Note.H = units.H;
             ApplySizeDimensions();
             PlaceAt(current, animate: true);
         }
@@ -251,6 +255,7 @@ namespace WidgetNotes
             Note.FontSize = Math.Round(e.NewValue);
             UpdateValueLabels();
             ApplyStyle();
+            ScheduleGrowCheck();
             NoteStore.SaveSoon();
         }
 
