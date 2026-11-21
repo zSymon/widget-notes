@@ -20,7 +20,10 @@ Einfach starten – keine Installation, kein .NET nötig. Läuft unter Windows 1
 
 - **Echte Desktop-Kacheln** – liegen auf dem Desktop unter allen Fenstern, bleiben bei <kbd>Win</kbd>+<kbd>D</kbd> sichtbar, tauchen nicht in Taskleiste oder Alt+Tab auf
 - **Raster mit Einrasten** – Kacheln beim Ziehen per Vorschau platzieren, sie weichen sich automatisch aus
-- **Vier Größen** – Klein, Mittel, Groß, Hoch
+- **Größe frei ziehen** – über den Griff unten rechts, rastet ins Raster ein; Schnellwahl Klein, Mittel, Groß, Hoch
+- **Wächst mit** – läuft Text unten heraus, wird die Kachel automatisch größer
+- **Bis an den Rand** – Kacheln lassen sich direkt an jeden Bildschirmrand setzen
+- **Automatische Updates** – neue Versionen werden erkannt und per Klick installiert
 - **Notiz oder Liste** – Aufgaben mit Haken, erledigte werden durchgestrichen
 - **Termine** – Fälligkeitsdatum und Uhrzeit per Mini-Kalender, Markierung für heute und überfällig
 - **Erinnerungen** – Windows-Benachrichtigung, wenn eine Aufgabe fällig ist
@@ -34,6 +37,7 @@ Einfach starten – keine Installation, kein .NET nötig. Läuft unter Windows 1
 | Aktion | So geht's |
 |---|---|
 | Kachel verschieben | An einer freien Stelle (nicht im Text) ziehen |
+| Größe ändern | Griff unten rechts in der Kachel ziehen |
 | Neue Notiz | **+** in der Kachel oder <kbd>Strg</kbd>+<kbd>N</kbd> |
 | Größe, Typ, Design, Löschen | **···** in der Kachel |
 | Neue Aufgabe | <kbd>Enter</kbd> in einer Aufgabe oder in „Neue Aufgabe“ |
