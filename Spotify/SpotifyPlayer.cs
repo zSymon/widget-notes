@@ -135,7 +135,7 @@ namespace WidgetNotes.Spotify
 
         // ---------- Spotify-App auf diesem PC (Windows-Mediensteuerung) ----------
 
-        // Nur die offizielle App: Betterfy u. Ä. melden Windows keine Songinfos – die kommen dann über die Web API.
+        // Nur die offizielle App: Browser-Player u. Ä. melden Windows oft keine Songinfos – die kommen dann über die Web API.
         private static bool IsSpotify(string? appId) =>
             appId != null && appId.Contains("spotify", StringComparison.OrdinalIgnoreCase);
 

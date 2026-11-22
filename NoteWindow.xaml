@@ -93,7 +93,7 @@
         <Border x:Name="Body" CornerRadius="{DynamicResource Radius}" Background="Transparent"
                 MouseLeftButtonDown="Body_MouseLeftButtonDown" Cursor="SizeAll">
             <Grid>
-                <!-- Spotify: weichgezeichnetes Cover als Hintergrund (Betterfy-Stil) -->
+                <!-- Spotify: weichgezeichnetes Cover als Hintergrund -->
                 <Grid x:Name="CoverBackdrop" Visibility="Collapsed" IsHitTestVisible="False" ClipToBounds="True">
                     <Image x:Name="BackdropImage" Stretch="UniformToFill" Opacity="0.42" RenderTransformOrigin="0.5,0.5">
                         <Image.RenderTransform>

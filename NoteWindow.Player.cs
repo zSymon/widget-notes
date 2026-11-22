@@ -71,7 +71,7 @@ namespace WidgetNotes
 
         // ---------- Aussehen ----------
 
-        /// <summary>Betterfy-Stil: Farben aus dem Cover statt aus dem Notiz-Design.</summary>
+        /// <summary>Cover-Stil: Farben aus dem Cover statt aus dem Notiz-Design.</summary>
         private Theme? PlayerTheme()
         {
             if (!IsPlayer || !Note.CoverBackdrop) return null;

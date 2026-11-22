@@ -60,8 +60,8 @@ Die Spotify-Kachel steuert die **Spotify-App auf deinem PC** – ohne Anmeldung 
 
 Unter **···** gibt es:
 
-- **Cover als Hintergrund** – weichgezeichnetes Cover, Farben passen sich dem Song an (Stil von [Betterfy](https://github.com/zSymon/betterfy)). Ausgeschaltet nimmt der Player das Design der Kachel an, also dieselben Farben wie deine Notizen.
-- **Spotify-Konto (optional)** – damit funktionieren zusätzlich **Lieblingssongs (Herz)** und **Zufall**, und der Player zeigt auch Musik, die auf dem **Handy, Lautsprecher oder in Betterfy** läuft.
+- **Cover als Hintergrund** – weichgezeichnetes Cover, Farben passen sich dem Song an. Ausgeschaltet nimmt der Player das Design der Kachel an, also dieselben Farben wie deine Notizen.
+- **Spotify-Konto (optional)** – damit funktionieren zusätzlich **Lieblingssongs (Herz)** und **Zufall**, und der Player zeigt auch Musik, die auf dem **Handy oder Lautsprecher** läuft.
 
 ### Spotify-Konto verbinden
 
@@ -72,7 +72,7 @@ Spotify verlangt dafür eine eigene **Client ID** (kostenlos, ca. 2 Minuten):
 3. **Web API** anhaken, Bedingungen akzeptieren, speichern
 4. Die **Client ID** kopieren, in der Kachel unter **··· → Spotify-Konto** einfügen → *Verbinden* und im Browser bestätigen
 
-Wer schon eine App hat (z. B. für Betterfy), kann dieselbe Client ID nehmen. Alternativ trägt dich ein Freund in seiner App unter *User Management* ein (max. 5 Personen) und gibt dir seine Client ID. Für die Steuerung über das Konto braucht Spotify **Premium**.
+Alternativ trägt dich ein Freund in seiner App unter *User Management* ein (max. 5 Personen) und gibt dir seine Client ID. Für die Steuerung über das Konto braucht Spotify **Premium**.
 
 Die Anmeldung wird verschlüsselt in `%APPDATA%\WidgetNotes\spotify.dat` gespeichert. Widget Notes steht in keiner Verbindung zu Spotify.
 

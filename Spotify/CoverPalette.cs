@@ -4,7 +4,7 @@ using System.Windows.Media.Imaging;
 
 namespace WidgetNotes.Spotify
 {
-    /// <summary>Farben aus dem Cover – wie in Betterfy: dunkler Grundton, Leuchten, kräftiger Akzent.</summary>
+    /// <summary>Farben aus dem Cover: dunkler Grundton, Leuchten, kräftiger Akzent.</summary>
     public sealed record CoverPalette(Color Base, Color Glow, Color Accent)
     {
         public static readonly CoverPalette Default = new(Color.FromRgb(24, 32, 28), Color.FromRgb(58, 92, 70), Color.FromRgb(134, 214, 160));

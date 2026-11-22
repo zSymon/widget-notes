@@ -14,7 +14,6 @@ namespace WidgetNotes.Spotify
 {
     /// <summary>
     /// Optionale Anmeldung bei Spotify (Authorization Code + PKCE über 127.0.0.1:8888).
-    /// Gleiche Redirect-URI wie Betterfy – eine Spotify-App (Client ID) reicht für beide.
     /// Tokens liegen DPAPI-verschlüsselt in %APPDATA%\WidgetNotes\spotify.dat.
     /// </summary>
     public static class SpotifyAuth
@@ -112,7 +111,7 @@ namespace WidgetNotes.Spotify
             }
             catch (SocketException)
             {
-                throw new InvalidOperationException($"Port {Port} ist belegt – läuft gerade eine andere Anmeldung (z. B. in Betterfy)?");
+                throw new InvalidOperationException($"Port {Port} ist belegt – läuft gerade eine andere Anmeldung?");
             }
 
             string code;

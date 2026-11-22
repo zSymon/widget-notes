@@ -55,7 +55,7 @@ namespace WidgetNotes
         public bool Shadow { get; set; } = true;
         public bool Gloss { get; set; } = true;
 
-        /// <summary>Spotify-Player: weichgezeichnetes Cover und Farben aus dem Cover (Betterfy-Stil).</summary>
+        /// <summary>Spotify-Player: weichgezeichnetes Cover und Farben aus dem Cover.</summary>
         public bool CoverBackdrop { get; set; } = true;
 
         public DateTime Modified { get; set; } = DateTime.Now;
