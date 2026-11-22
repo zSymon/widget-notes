@@ -22,10 +22,12 @@ namespace WidgetNotes
         private void ApplyKind()
         {
             bool todo = Note.Kind == "todo";
-            TextContent.Visibility = todo ? Visibility.Collapsed : Visibility.Visible;
+            bool player = Note.Kind == SpotifyKind;
+            TextContent.Visibility = todo || player ? Visibility.Collapsed : Visibility.Visible;
             ListContent.Visibility = todo ? Visibility.Visible : Visibility.Collapsed;
             HeaderIcon.Text = todo ? "" : "";
             UpdateHeader();
+            ApplyPlayerKind();
         }
 
         private void SwitchKind(string kind)

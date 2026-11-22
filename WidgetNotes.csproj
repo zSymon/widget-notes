@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net11.0-windows</TargetFramework>
+    <TargetFramework>net11.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
@@ -12,8 +13,8 @@
 
     <Product>Widget Notes</Product>
     <AssemblyTitle>Widget Notes</AssemblyTitle>
-    <Description>Notizen und To-dos als Kacheln auf dem Windows-Desktop</Description>
-    <Version>1.4.0</Version>
+    <Description>Notizen, To-dos und Spotify-Player als Kacheln auf dem Windows-Desktop</Description>
+    <Version>1.5.0</Version>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 

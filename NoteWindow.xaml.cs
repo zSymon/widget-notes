@@ -54,6 +54,7 @@ namespace WidgetNotes
             UpdatePlaceholders();
 
             LocationChanged += OnLocationChanged;
+            Body.SizeChanged += (_, _) => UpdateBackdropClip();
             _loading = false;
         }
 
@@ -106,6 +107,7 @@ namespace WidgetNotes
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
+            DetachPlayer();
             // Startet der Explorer neu, zerstört Windows die Kacheln mit (sie gehören dem Desktop).
             if (!_allowClose && !App.IsExiting)
                 App.OnWindowLost(this);
@@ -313,6 +315,11 @@ namespace WidgetNotes
 
         private void Window_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if (PlayerWheel(e))
+            {
+                e.Handled = true;
+                return;
+            }
             if (Keyboard.Modifiers != ModifierKeys.Control) return;
             Note.FontSize = Math.Clamp(Note.FontSize + (e.Delta > 0 ? 1 : -1), 10, 28);
             ApplyStyle();
@@ -366,7 +373,7 @@ namespace WidgetNotes
 
         public void ApplyStyle()
         {
-            var t = Themes.Resolve(Note);
+            var t = PlayerTheme() ?? Themes.Resolve(Note);
 
             ShadowLayer.Background = t.CreateBackground(Note.Opacity);
             ShadowLayer.Effect = Note.Shadow ? _shadow : null;
@@ -399,6 +406,7 @@ namespace WidgetNotes
                 box.SelectionBrush = Brush(t.Accent);
                 box.SelectionOpacity = 0.35;
             }
+            ApplyBackdrop();
         }
 
         private static SolidColorBrush Brush(Color c)

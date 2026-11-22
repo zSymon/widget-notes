@@ -1,4 +1,4 @@
-<Window x:Class="WidgetNotes.NoteWindow"
+﻿<Window x:Class="WidgetNotes.NoteWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
@@ -93,6 +93,27 @@
         <Border x:Name="Body" CornerRadius="{DynamicResource Radius}" Background="Transparent"
                 MouseLeftButtonDown="Body_MouseLeftButtonDown" Cursor="SizeAll">
             <Grid>
+                <!-- Spotify: weichgezeichnetes Cover als Hintergrund (Betterfy-Stil) -->
+                <Grid x:Name="CoverBackdrop" Visibility="Collapsed" IsHitTestVisible="False" ClipToBounds="True">
+                    <Image x:Name="BackdropImage" Stretch="UniformToFill" Opacity="0.42" RenderTransformOrigin="0.5,0.5">
+                        <Image.RenderTransform>
+                            <ScaleTransform ScaleX="1.35" ScaleY="1.35" />
+                        </Image.RenderTransform>
+                        <Image.Effect>
+                            <BlurEffect Radius="38" KernelType="Gaussian" />
+                        </Image.Effect>
+                    </Image>
+                    <Rectangle x:Name="BackdropGlow" />
+                    <Rectangle>
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#00000000" Offset="0.35" />
+                                <GradientStop Color="#73000000" Offset="1" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                    </Rectangle>
+                </Grid>
+
                 <Border x:Name="Gloss" CornerRadius="{DynamicResource RadiusTop}" Height="70"
                         VerticalAlignment="Top" IsHitTestVisible="False">
                     <Border.Background>
@@ -113,6 +134,90 @@
                     </Border.BorderBrush>
                 </Border>
 
+                <Grid x:Name="PlayerContent" Visibility="Collapsed" Margin="14">
+                    <Grid x:Name="PlayerGrid">
+                        <!-- Cover -->
+                        <Border x:Name="CoverBox" CornerRadius="12" Background="{DynamicResource ChipBg}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.35" />
+                            </Border.Effect>
+                            <TextBlock x:Name="CoverPlaceholder" Text="&#xE8D6;" FontFamily="{StaticResource Icons}" FontSize="22"
+                                       Foreground="{DynamicResource Secondary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+
+                        <!-- Titel & Interpret -->
+                        <StackPanel x:Name="InfoPanel" VerticalAlignment="Center">
+                            <TextBlock x:Name="TrackTitle" FontFamily="{DynamicResource DisplayFont}" FontWeight="SemiBold" FontSize="15"
+                                       Foreground="{DynamicResource Fg}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" />
+                            <TextBlock x:Name="TrackArtist" FontFamily="{DynamicResource UiFont}" FontSize="12.5" Margin="0,2,0,0"
+                                       Foreground="{DynamicResource Secondary}" TextTrimming="CharacterEllipsis" />
+                            <Button x:Name="OpenSpotifyButton" Style="{StaticResource PlayerPill}" Content="Spotify öffnen"
+                                    HorizontalAlignment="Left" Margin="0,10,0,0" Click="OpenSpotify_Click" Visibility="Collapsed" />
+                        </StackPanel>
+
+                        <!-- Fortschritt -->
+                        <Grid x:Name="ProgressRow">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="PosText" Style="{StaticResource PlayerTime}" Margin="0,0,8,0" TextAlignment="Right" />
+                            <Grid x:Name="ProgressTrack" Grid.Column="1" Height="14" Background="Transparent" Cursor="Hand"
+                                  MouseLeftButtonDown="Progress_MouseLeftButtonDown" ToolTip="Spulen">
+                                <Border Height="3" CornerRadius="1.5" Background="{DynamicResource ChipHover}" VerticalAlignment="Center" />
+                                <Border x:Name="ProgressFill" Height="3" CornerRadius="1.5" Background="{DynamicResource Accent}"
+                                        HorizontalAlignment="Left" VerticalAlignment="Center" Width="0" />
+                            </Grid>
+                            <TextBlock x:Name="DurText" Grid.Column="2" Style="{StaticResource PlayerTime}" Margin="8,0,0,0" />
+                        </Grid>
+
+                        <!-- Steuerung -->
+                        <Grid x:Name="ControlsRow">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="ShuffleButton" Style="{StaticResource PlayerIcon}" Content="&#xE8B1;" ToolTip="Zufall"
+                                    HorizontalAlignment="Left" Click="Shuffle_Click" />
+                            <Button Grid.Column="1" Style="{StaticResource PlayerIcon}" ToolTip="Zurück" Click="Prev_Click">
+                                <Path Data="M 0,0 L 2,0 L 2,12 L 0,12 Z M 12,0 L 12,12 L 3,6 Z" Fill="{DynamicResource Fg}" Width="12" Height="12" Stretch="Uniform" />
+                            </Button>
+                            <Button x:Name="PlayButton" Grid.Column="2" Style="{StaticResource PlayerPlay}" ToolTip="Abspielen / Pause"
+                                    Margin="6,0" Click="Play_Click">
+                                <Grid>
+                                    <Path x:Name="PlayIcon" Data="M 0,0 L 10,6 L 0,12 Z" Fill="{DynamicResource OnAccent}" Width="13" Height="15"
+                                          Stretch="Uniform" Margin="3,0,0,0" />
+                                    <Path x:Name="PauseIcon" Data="M 0,0 L 3.5,0 L 3.5,12 L 0,12 Z M 6.5,0 L 10,0 L 10,12 L 6.5,12 Z"
+                                          Fill="{DynamicResource OnAccent}" Width="12" Height="14" Stretch="Uniform" Visibility="Collapsed" />
+                                </Grid>
+                            </Button>
+                            <Button Grid.Column="3" Style="{StaticResource PlayerIcon}" ToolTip="Weiter" Click="Next_Click">
+                                <Path Data="M 10,0 L 12,0 L 12,12 L 10,12 Z M 0,0 L 0,12 L 9,6 Z" Fill="{DynamicResource Fg}" Width="12" Height="12" Stretch="Uniform" />
+                            </Button>
+                            <Button x:Name="LikeButton" Grid.Column="4" Style="{StaticResource PlayerIcon}" Content="&#xE006;" ToolTip="Lieblingssong"
+                                    HorizontalAlignment="Right" Click="Like_Click" />
+                        </Grid>
+
+                        <!-- Lautstärke -->
+                        <Grid x:Name="VolumeRow">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="MuteButton" Style="{StaticResource PlayerIcon}" Width="24" Height="24" FontSize="13"
+                                    Content="&#xE767;" ToolTip="Stumm" Click="Mute_Click" />
+                            <Slider x:Name="VolumeSlider" Grid.Column="1" Style="{StaticResource PlayerSlider}" Minimum="0" Maximum="100"
+                                    Margin="6,0" ValueChanged="Volume_ValueChanged" ToolTip="Lautstärke (auch per Mausrad)" />
+                            <TextBlock x:Name="VolumeText" Grid.Column="2" Style="{StaticResource PlayerTime}" Width="22" TextAlignment="Right" />
+                        </Grid>
+                    </Grid>
+                </Grid>
+
                 <Grid Margin="18,14,16,14">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="26" />
@@ -121,7 +226,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Kopfzeile -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel x:Name="HeaderPanel" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock x:Name="HeaderIcon" Text="&#xE70B;" FontFamily="{StaticResource Icons}" FontSize="12"
                                    Foreground="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,1,7,0" />
                         <TextBlock x:Name="HeaderLabel" FontFamily="{DynamicResource UiFont}" FontSize="12"
@@ -152,12 +257,12 @@
                                 </Style.Triggers>
                             </Style>
                         </StackPanel.Style>
-                        <Button Style="{StaticResource ChipButton}" Content="&#xE710;" ToolTip="Neue Notiz (Strg+N)" Click="New_Click" />
+                        <Button x:Name="NewButton" Style="{StaticResource ChipButton}" Content="&#xE710;" ToolTip="Neue Notiz (Strg+N)" Click="New_Click" />
                         <Button x:Name="MoreButton" Style="{StaticResource ChipButton}" Content="&#xE712;" ToolTip="Optionen" Click="More_Click" />
                     </StackPanel>
 
                     <!-- Titel -->
-                    <Grid Grid.Row="1" Margin="0,8,0,6" Cursor="IBeam">
+                    <Grid x:Name="TitleRow" Grid.Row="1" Margin="0,8,0,6" Cursor="IBeam">
                         <TextBox x:Name="TitleBox" Style="{StaticResource BareTextBox}"
                                  FontFamily="{DynamicResource DisplayFont}" FontSize="19" FontWeight="SemiBold"
                                  MaxLength="80" TextChanged="Title_TextChanged" PreviewKeyDown="Title_PreviewKeyDown" />
@@ -263,7 +368,7 @@
                         <!-- Hauptseite -->
                         <StackPanel x:Name="MainPage" Margin="6">
                             <TextBlock Text="TYP" Style="{StaticResource MenuLabel}" Margin="8,4,0,5" />
-                            <UniformGrid Columns="2">
+                            <UniformGrid Columns="3">
                                 <RadioButton x:Name="KindText" GroupName="Kind" Tag="text" Style="{StaticResource SegmentOption}" Click="Kind_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE70B;" FontFamily="{StaticResource Icons}" Margin="0,2,7,0" />
@@ -274,6 +379,12 @@
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE9D5;" FontFamily="{StaticResource Icons}" Margin="0,2,7,0" />
                                         <TextBlock Text="Liste" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton x:Name="KindSpotify" GroupName="Kind" Tag="spotify" Style="{StaticResource SegmentOption}" Click="Kind_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE8D6;" FontFamily="{StaticResource Icons}" Margin="0,2,6,0" />
+                                        <TextBlock Text="Spotify" />
                                     </StackPanel>
                                 </RadioButton>
                             </UniformGrid>
@@ -325,6 +436,24 @@
                                     <TextBlock Text="Design übernehmen …" />
                                 </DockPanel>
                             </Button>
+                            <StackPanel x:Name="SpotifyMenu" Visibility="Collapsed">
+                                <CheckBox x:Name="CoverSwitch" Style="{StaticResource Switch}" Margin="10,6,10,6" Click="CoverSwitch_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE91B;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                        <TextBlock Text="Cover als Hintergrund" />
+                                    </StackPanel>
+                                </CheckBox>
+                                <Button Style="{StaticResource MenuRow}" HorizontalContentAlignment="Stretch" Click="SpotifyAccount_Click">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="&#xE76C;" FontFamily="{StaticResource Icons}" FontSize="10"
+                                                   VerticalAlignment="Center" Foreground="{StaticResource MenuMuted}" />
+                                        <TextBlock x:Name="AccountState" DockPanel.Dock="Right" FontSize="11" Margin="0,0,8,0"
+                                                   VerticalAlignment="Center" Foreground="{StaticResource MenuMuted}" />
+                                        <TextBlock Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                        <TextBlock Text="Spotify-Konto" />
+                                    </DockPanel>
+                                </Button>
+                            </StackPanel>
 
                             <Border Height="1" Background="#1FFFFFFF" Margin="6,4" />
 
@@ -343,7 +472,7 @@
                             <Button Style="{StaticResource MenuRow}" Click="MenuDelete_Click" Foreground="#FF6961">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE74D;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
-                                    <TextBlock Text="Notiz löschen" />
+                                    <TextBlock x:Name="DeleteText" Text="Notiz löschen" />
                                 </StackPanel>
                             </Button>
 
@@ -373,6 +502,54 @@
                             </DockPanel>
                             <TextBlock Text="VON NOTIZ" Style="{StaticResource MenuLabel}" Margin="8,4,0,4" />
                             <StackPanel x:Name="CopySourceList" />
+                        </StackPanel>
+
+                        <!-- Spotify-Konto (optional) -->
+                        <StackPanel x:Name="SpotifyPage" Margin="6" Visibility="Collapsed">
+                            <DockPanel Margin="0,0,0,2">
+                                <Button Style="{StaticResource IconButton}" Content="&#xE72B;" Click="Back_Click" ToolTip="Zurück" />
+                                <TextBlock Text="Spotify-Konto" Foreground="White" FontFamily="{StaticResource MenuFont}"
+                                           FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0,0,0" />
+                            </DockPanel>
+                            <TextBlock TextWrapping="Wrap" Foreground="{StaticResource MenuMuted}" FontFamily="{StaticResource MenuFont}"
+                                       FontSize="12" Margin="10,4,10,8" LineHeight="17"
+                                       Text="Optional. Ohne Konto steuert der Player die Spotify-App auf diesem PC. Mit Konto kommen Lieblingssongs, Zufall und Musik von Handy oder Lautsprecher dazu." />
+
+                            <StackPanel x:Name="AccountConnected">
+                                <DockPanel Margin="10,2,10,8">
+                                    <Ellipse Width="8" Height="8" Fill="#30D158" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Verbunden" Foreground="White" FontFamily="{StaticResource MenuFont}" FontSize="13" />
+                                </DockPanel>
+                                <Button Style="{StaticResource MenuRow}" Click="SpotifyDisconnect_Click" Foreground="#FF6961">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE8D8;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                        <TextBlock Text="Trennen" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+
+                            <StackPanel x:Name="AccountForm">
+                                <TextBlock Text="CLIENT ID" Style="{StaticResource MenuLabel}" Margin="10,2,0,5" />
+                                <Border CornerRadius="8" Background="#1FFFFFFF" Padding="10,7" Margin="8,0">
+                                    <Grid>
+                                        <TextBox x:Name="ClientIdBox" Style="{StaticResource BareTextBox}" Foreground="White" CaretBrush="White"
+                                                 FontFamily="Cascadia Mono, Consolas" FontSize="12" MaxLength="40" KeyDown="ClientIdBox_KeyDown"
+                                                 TextChanged="ClientIdBox_TextChanged" />
+                                        <TextBlock x:Name="ClientIdPlaceholder" Text="32 Zeichen aus dem Dashboard" IsHitTestVisible="False"
+                                                   Foreground="{StaticResource MenuMuted}" FontFamily="{StaticResource MenuFont}" FontSize="12" Margin="2,0,0,0" />
+                                    </Grid>
+                                </Border>
+                                <Button Style="{StaticResource PillButton}" Content="Verbinden" Margin="8,10,8,4" HorizontalAlignment="Stretch"
+                                        Background="{DynamicResource MenuAccent}" Foreground="{DynamicResource OnMenuAccent}" Click="SpotifyConnect_Click" />
+                                <Button Style="{StaticResource MenuRow}" Click="SpotifyHelp_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE897;" FontFamily="{StaticResource Icons}" FontSize="12" Width="24" VerticalAlignment="Center" />
+                                        <TextBlock Text="So bekommst du eine Client ID" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                            <TextBlock x:Name="AccountStatus" TextWrapping="Wrap" FontFamily="{StaticResource MenuFont}" FontSize="12"
+                                       Foreground="{StaticResource MenuMuted}" Margin="10,2,10,6" Visibility="Collapsed" />
                         </StackPanel>
 
                         <!-- Anpassen -->

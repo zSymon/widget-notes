@@ -15,7 +15,9 @@ namespace WidgetNotes
         private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string RunValueName = "WidgetNotes";
 
-        private const string ShowEventName = "WidgetNotes_ShowWidgets";
+        // Test-Instanzen (WIDGETNOTES_DATA) laufen getrennt von der normalen App.
+        private static readonly string InstanceSuffix = Environment.GetEnvironmentVariable("WIDGETNOTES_DATA") is { Length: > 0 } ? "_Test" : "";
+        private static readonly string ShowEventName = "WidgetNotes_ShowWidgets" + InstanceSuffix;
         private const string AutostartArg = "--autostart";
         private const string UpdatedArg = "--updated";
         private const string InstallUpdateArg = "--install-update";
@@ -56,7 +58,7 @@ namespace WidgetNotes
 
             bool isUpdated = e.Args.Contains(UpdatedArg);
 
-            _mutex = new Mutex(true, "WidgetNotes_SingleInstance", out bool isFirstInstance);
+            _mutex = new Mutex(true, "WidgetNotes_SingleInstance" + InstanceSuffix, out bool isFirstInstance);
             if (!isFirstInstance && isUpdated)
             {
                 // Nach einem Update: warten, bis sich die alte Version beendet hat.
@@ -98,7 +100,12 @@ namespace WidgetNotes
 
             if (isUpdated)
             {
-                ShowBalloon($"Aktualisiert auf v{Updater.Current}", "Widget Notes ist jetzt auf dem neuesten Stand.");
+                if (NoteStore.Notes.Any(n => n.Kind == NoteWindow.SpotifyKind))
+                    ShowBalloon($"Aktualisiert auf v{Updater.Current}", "Widget Notes ist jetzt auf dem neuesten Stand.");
+                else
+                    ShowBalloon($"Neu in v{Updater.Current}: Spotify-Player",
+                        "Steuere Spotify direkt vom Desktop. Hier klicken, um den Player als Kachel hinzuzufügen.",
+                        () => CreateNote(kind: NoteWindow.SpotifyKind));
                 var cleanup = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
                 cleanup.Tick += (_, _) => { cleanup.Stop(); Updater.CleanupOld(); };
                 cleanup.Start();
@@ -113,6 +120,12 @@ namespace WidgetNotes
                 late.Start();
             }
 
+            if (Environment.GetEnvironmentVariable("WIDGETNOTES_SCREENSHOT") is { Length: > 0 } shotDir)
+            {
+                ScheduleScreenshots(shotDir);
+                return;
+            }
+
             // Kacheln liegen unter allen Fenstern – beim manuellen Start den Desktop zeigen,
             // damit man sieht, dass die App läuft.
             if (!isAutostart && !isUpdated && !installNow)
@@ -122,6 +135,32 @@ namespace WidgetNotes
                     ShowBalloon("Widget Notes läuft",
                         "Deine Notizen liegen als Kacheln auf dem Desktop. Ein Klick auf das Symbol hier unten zeigt sie jederzeit.");
             }
+        }
+
+        /// <summary>Debug-Hilfe: alle Kacheln als PNG speichern und beenden (WIDGETNOTES_SCREENSHOT=Ordner).</summary>
+        private void ScheduleScreenshots(string dir)
+        {
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(double.TryParse(Environment.GetEnvironmentVariable("WIDGETNOTES_SCREENSHOT_DELAY"), out var d) ? d : 4) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                System.IO.Directory.CreateDirectory(dir);
+                int i = 0;
+                foreach (var w in _windows)
+                {
+                    var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(w);
+                    var bmp = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                        (int)(w.ActualWidth * dpi.DpiScaleX), (int)(w.ActualHeight * dpi.DpiScaleY), dpi.PixelsPerInchX, dpi.PixelsPerInchY,
+                        System.Windows.Media.PixelFormats.Pbgra32);
+                    bmp.Render(w);
+                    var enc = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bmp));
+                    using var f = System.IO.File.Create(System.IO.Path.Combine(dir, $"tile{i++}-{w.Note.Kind}-{w.Note.Units.W}x{w.Note.Units.H}.png"));
+                    enc.Save(f);
+                }
+                ExitApp();
+            };
+            timer.Start();
         }
 
         // ---------- Updates ----------
@@ -226,7 +265,7 @@ namespace WidgetNotes
         private Action? _balloonAction;
 
         /// <summary>Benachrichtigung zeigen; ein Klick darauf führt <paramref name="onClick"/> aus (Standard: Desktop zeigen).</summary>
-        private void ShowBalloon(string title, string text, Action? onClick = null)
+        public void ShowBalloon(string title, string text, Action? onClick = null)
         {
             if (_tray == null) return;
             _balloonAction = onClick ?? ToggleDesktop;
@@ -333,9 +372,9 @@ namespace WidgetNotes
             retry.Start();
         }
 
-        public void CreateNote(NoteWindow? near = null)
+        public void CreateNote(NoteWindow? near = null, string kind = "text")
         {
-            var note = new NoteData { Theme = near?.Note.Theme ?? Themes.DefaultKey };
+            var note = new NoteData { Theme = near?.Note.Theme ?? Themes.DefaultKey, Kind = kind };
             Point desired;
             if (near != null)
             {
@@ -346,7 +385,7 @@ namespace WidgetNotes
 
             NoteStore.Notes.Add(note);
             var w = OpenWindow(note, desired);
-            w.FocusEditor();
+            if (kind != NoteWindow.SpotifyKind) w.FocusEditor();
         }
 
         public void ApplyStyleToAll(NoteData source)
@@ -444,6 +483,7 @@ namespace WidgetNotes
         {
             var menu = new Forms.ContextMenuStrip();
             menu.Items.Add("Neue Notiz", null, (_, _) => CreateNote());
+            menu.Items.Add("Neuer Spotify-Player", null, (_, _) => CreateNote(kind: NoteWindow.SpotifyKind));
             menu.Items.Add("Desktop anzeigen", null, (_, _) => ToggleDesktop());
             menu.Items.Add(new Forms.ToolStripSeparator());
             var autostart = new Forms.ToolStripMenuItem("Mit Windows starten") { Checked = IsAutostartEnabled() };

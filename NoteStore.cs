@@ -9,8 +9,10 @@ namespace WidgetNotes
     /// <summary>Lädt und speichert alle Notizen als JSON in %APPDATA%\WidgetNotes\notes.json.</summary>
     public static class NoteStore
     {
-        public static readonly string Folder =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WidgetNotes");
+        /// <summary>Für Tests per WIDGETNOTES_DATA umlenkbar (eigene Daten, eigene Instanz).</summary>
+        public static readonly string Folder = Environment.GetEnvironmentVariable("WIDGETNOTES_DATA") is { Length: > 0 } custom
+            ? custom
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WidgetNotes");
 
         public static readonly string FilePath = Path.Combine(Folder, "notes.json");
 

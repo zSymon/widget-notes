@@ -21,6 +21,7 @@ namespace WidgetNotes
             MainPage.Visibility = Visibility.Visible;
             CustomizePage.Visibility = Visibility.Collapsed;
             CopyPage.Visibility = Visibility.Collapsed;
+            SpotifyPage.Visibility = Visibility.Collapsed;
             MenuPopup.IsOpen = true;
         }
 
@@ -28,14 +29,19 @@ namespace WidgetNotes
         {
             _syncingMenu = true;
 
-            KindText.IsChecked = Note.Kind != "todo";
+            KindText.IsChecked = Note.Kind is not ("todo" or SpotifyKind);
             KindTodo.IsChecked = Note.Kind == "todo";
+            KindSpotify.IsChecked = IsPlayer;
+            SpotifyMenu.Visibility = IsPlayer ? Visibility.Visible : Visibility.Collapsed;
+            CoverSwitch.IsChecked = Note.CoverBackdrop;
+            DeleteText.Text = IsPlayer ? "Player entfernen" : "Notiz löschen";
+            SyncSpotifyPage();
             SizeSmall.IsChecked = Note.Units == GridLayout.Units("Small");
             SizeMedium.IsChecked = Note.Units == GridLayout.Units("Medium");
             SizeLarge.IsChecked = Note.Units == GridLayout.Units("Large");
             SizeTall.IsChecked = Note.Units == GridLayout.Units("Tall");
             foreach (var child in SwatchPanel.Children)
-                if (child is RadioButton rb) rb.IsChecked = (string)rb.Tag == Note.Theme;
+                if (child is RadioButton rb) rb.IsChecked = (string)rb.Tag == Note.Theme && PlayerTheme() == null;
             ClearDoneRow.Visibility = Note.Kind == "todo" ? Visibility.Visible : Visibility.Collapsed;
 
             OpacitySlider.Value = Note.Opacity;
@@ -106,6 +112,8 @@ namespace WidgetNotes
                 rb.Click += (_, _) =>
                 {
                     Note.Theme = theme.Key;
+                    LeaveCoverMode();
+                    CoverSwitch.IsChecked = Note.CoverBackdrop;
                     ApplyStyle();
                     NoteStore.SaveSoon();
                 };
@@ -144,7 +152,7 @@ namespace WidgetNotes
         private void MenuDelete_Click(object sender, RoutedEventArgs e)
         {
             MenuPopup.IsOpen = false;
-            bool empty = string.IsNullOrWhiteSpace(Note.Title) && string.IsNullOrWhiteSpace(Note.Text) && Note.Items.Count == 0;
+            bool empty = IsPlayer || string.IsNullOrWhiteSpace(Note.Title) && string.IsNullOrWhiteSpace(Note.Text) && Note.Items.Count == 0;
             if (empty) App.DeleteNote(this);
             else ShowConfirm();
         }
@@ -171,9 +179,9 @@ namespace WidgetNotes
         private void Customize_Click(object sender, RoutedEventArgs e)
         {
             // Eigene Farben starten mit dem aktuellen Look.
-            if (Note.Theme != Themes.CustomKey || Note.CustomColor1 == null)
+            if (Note.Theme != Themes.CustomKey || Note.CustomColor1 == null || PlayerTheme() != null)
             {
-                var t = Themes.Resolve(Note);
+                var t = PlayerTheme() ?? Themes.Resolve(Note);
                 Note.CustomColor1 = Themes.ToHex(t.Stops[0]);
                 Note.CustomColor2 = Themes.ToHex(t.Stops[^1]);
                 Note.CustomAccent = Themes.ToHex(t.Accent);
@@ -193,6 +201,7 @@ namespace WidgetNotes
             SyncMenu();
             CustomizePage.Visibility = Visibility.Collapsed;
             CopyPage.Visibility = Visibility.Collapsed;
+            SpotifyPage.Visibility = Visibility.Collapsed;
             MainPage.Visibility = Visibility.Visible;
         }
 
@@ -228,6 +237,7 @@ namespace WidgetNotes
                 row.Click += (_, _) =>
                 {
                     Note.CopyStyleFrom(source);
+                    LeaveCoverMode();
                     ApplyStyle();
                     NoteStore.SaveSoon();
                     ScheduleGrowCheck();
@@ -253,6 +263,7 @@ namespace WidgetNotes
         /// <summary>Titel, sonst erste Textzeile bzw. erste Aufgabe, sonst „Ohne Titel“.</summary>
         private static string NoteLabel(NoteData n)
         {
+            if (n.Kind == SpotifyKind) return "Spotify-Player";
             if (!string.IsNullOrWhiteSpace(n.Title)) return n.Title.Trim();
             var first = n.Kind == "todo"
                 ? n.Items.Select(i => i.Text).FirstOrDefault(t => !string.IsNullOrWhiteSpace(t))
@@ -293,6 +304,7 @@ namespace WidgetNotes
                 default: Note.CustomAccent = hex; break;
             }
             Note.Theme = Themes.CustomKey;
+            LeaveCoverMode();
             UpdateTargetSwatches();
             ApplyStyle();
             NoteStore.SaveSoon();

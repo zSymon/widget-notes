@@ -7,7 +7,7 @@ namespace WidgetNotes
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
-        /// <summary>"text" oder "todo".</summary>
+        /// <summary>"text", "todo" oder "spotify".</summary>
         public string Kind { get; set; } = "text";
         public string Title { get; set; } = "";
         public string Text { get; set; } = "";
@@ -54,6 +54,9 @@ namespace WidgetNotes
         public double FontSize { get; set; } = 14;
         public bool Shadow { get; set; } = true;
         public bool Gloss { get; set; } = true;
+
+        /// <summary>Spotify-Player: weichgezeichnetes Cover und Farben aus dem Cover (Betterfy-Stil).</summary>
+        public bool CoverBackdrop { get; set; } = true;
 
         public DateTime Modified { get; set; } = DateTime.Now;
 

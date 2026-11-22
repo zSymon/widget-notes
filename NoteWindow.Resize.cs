@@ -84,7 +84,7 @@ namespace WidgetNotes
 
         private void GrowIfOverflowing()
         {
-            if (_resizing || _dragging || !IsVisible) return;
+            if (_resizing || _dragging || !IsVisible || IsPlayer) return;
 
             // Unten wird der Inhalt ausgeblendet – schon wachsen, bevor Text in diesen Bereich rutscht.
             bool overflowing = Note.Kind == "todo"
